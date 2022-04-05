@@ -1,0 +1,22 @@
+[
+    {
+        "ParameterKey": "VpcId",
+        "ParameterValue": "vpc-0a202b3cf75ac8de8"
+    },
+    {
+        "ParameterKey": "CidrPrivSubA",
+        "ParameterValue": "172.31.0.0/24"
+    },
+    {
+        "ParameterKey": "CidrPrivSubB",
+        "ParameterValue": "172.31.1.0/24"
+    },
+    {
+        "ParameterKey": "CidrPrivSubC",
+        "ParameterValue": "172.31.2.0/24"
+    },
+    {
+        "ParameterKey": "Ec2Key",
+        "ParameterValue": "yo-test-ec2-key"
+    }
+]

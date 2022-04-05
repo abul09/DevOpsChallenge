@@ -1,0 +1,291 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Subnets for DevOps challenge
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+
+  CidrPrivSubA:
+    Description: CIDR for PRIVATE subnet A
+    Type: String
+
+  CidrPrivSubB:
+    Description: CIDR for PRIVATE subnet B
+    Type: String
+
+  CidrPrivSubC:
+    Description: CIDR for PRIVATE subnet C
+    Type: String
+  
+  DBInstanceClass:
+    Description: The compute and memory capacity of the DB instance, for example, db.m4.large.
+    Type: String
+    Default: db.t3.micro # Free tier
+  
+  DBName:
+    Type: String
+    Default: MyDatabase
+  
+  Engine:
+    Description: The name of the database engine that you want to use for this DB instance.
+    Type: String
+    Default: mysql
+  
+  MasterUserPassword:
+    Description: The password for the master user.
+    Type: String
+    Default: MyPassword
+  
+  MasterUsername:
+    Description: The master user name for the DB instance.
+    Type: String
+    Default: MyName
+
+  Ec2Key:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Key Pair Name for SSH connection
+
+Resources:
+  # Private subnets
+  SubnetPrivA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      VpcId: !Ref VpcId
+      CidrBlock: !Ref CidrPrivSubA
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  SubnetPrivB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      VpcId: !Ref VpcId
+      CidrBlock: !Ref CidrPrivSubB
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  SubnetPrivC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs ''
+      VpcId: !Ref VpcId
+      CidrBlock: !Ref CidrPrivSubC
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  # Private route tables
+  PrivRtA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  PrivRtB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  PrivRtC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  # Private route tables associations
+  PrivRtAssA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRtA
+      SubnetId: !Ref SubnetPrivA
+
+  PrivRtAssB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRtB
+      SubnetId: !Ref SubnetPrivB
+
+  PrivRtAssC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivRtC
+      SubnetId: !Ref SubnetPrivC
+
+  # Network ACL for private subnets
+  NaclPriv:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  # Network ACL association for private subnets
+  NaclPrivAssA:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      SubnetId: !Ref SubnetPrivA
+
+  NaclPrivAssB:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      SubnetId: !Ref SubnetPrivB
+
+  # Private NACl Rules Inbound
+  NaclIng1:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      RuleNumber: 100
+      RuleAction: allow
+      Egress: false
+      Protocol: 6
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: 22
+        To: 22
+
+  NaclIng2:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      RuleNumber: 110
+      RuleAction: allow
+      Egress: false
+      Protocol: 6
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: 443
+        To: 443
+
+  NaclIng3:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      RuleNumber: 120
+      RuleAction: allow
+      Egress: false
+      Protocol: 6
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: 3306
+        To: 3306
+
+  # Private NACL Rules Outbound
+  NaclEg1:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      RuleNumber: 100
+      RuleAction: allow
+      Egress: true
+      Protocol: 6
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: 22
+        To: 22
+
+  NaclEg2:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      RuleNumber: 110
+      RuleAction: allow
+      Egress: true
+      Protocol: 6
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: 443
+        To: 443
+
+  NaclEg3:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref NaclPriv
+      RuleNumber: 120
+      RuleAction: allow
+      Egress: true
+      Protocol: 6
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: 3306
+        To: 3306
+
+  # RDS Subnet Group
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: MySQL subnet group
+      DBSubnetGroupName: mysql-subnet-group
+      SubnetIds:
+        - !Ref SubnetPrivA
+        - !Ref SubnetPrivB
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  # MySQL RDS
+  MySqlRds:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 5
+      DBInstanceClass: !Ref DBInstanceClass
+      DBName: !Ref DBName
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      Engine: !Ref Engine
+      MasterUserPassword: !Ref MasterUserPassword
+      MasterUsername: !Ref MasterUsername
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+
+  # Flask Security Group
+  FlaskSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Flask instance
+      GroupName: flask-ec2-instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: devops-challenge
+      VpcId: !Ref VpcId
+
+  # EC2 for Flask application
+  FlaskInstance:
+    Type: AWS::EC2::Instance
+    Properties:      
+      KeyName: !Ref Ec2Key
+      ImageId: ami-04505e74c0741db8d # Ubuntu Server 20.04
+      InstanceType: t2.micro # Free tier
+      SecurityGroupIds:
+        - !Ref FlaskSg      
+      SubnetId: !Ref SubnetPrivC
+      Tags:
+        - Key: Name
+          Value: devops-challenge
